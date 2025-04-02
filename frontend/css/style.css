@@ -1,0 +1,52 @@
+.card {
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.patient-list {
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+.patient-item {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.patient-item:hover {
+    background-color: #f8f9fa;
+}
+
+.patient-item.high-priority {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.patient-item.medium-priority {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.vital-signs h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.badge {
+    padding: 0.5em 1em;
+    font-weight: 500;
+}
+
+.navbar {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+} 

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleMedicine Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <!-- Add Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvYK5BOWEww4JQ1P29b3SVtqwBA-ldJIg",
+            authDomain: "telemedicine-1dec4.firebaseapp.com",
+            projectId: "telemedicine-1dec4",
+            storageBucket: "telemedicine-1dec4.appspot.com",
+            messagingSenderId: "380643813197",
+            appId: "1:380643813197:web:ebd6fff54df09c68353904",
+            measurementId: "G-V12PXK1J5Q"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Make auth available globally
+        window.auth = auth;
+    </script>
+    <script src="auth.js" type="module"></script>
+    <style>
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+        }
+        .loading.active {
+            display: block;
+        }
+        .patient-item {
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #eee;
+        }
+        .patient-item:hover {
+            background-color: #f8f9fa;
+        }
+        .patient-item.selected {
+            background-color: #e9ecef;
+        }
+        .high-priority {
+            border-left: 4px solid #dc3545;
+        }
+        .medium-priority {
+            border-left: 4px solid #ffc107;
+        }
+        .low-priority {
+            border-left: 4px solid #28a745;
+        }
+        .stats-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .quick-action-btn {
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .recent-consultation {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+        .recent-consultation:hover {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        #patientQueue {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        #patientQueue::-webkit-scrollbar {
+            width: 6px;
+        }
+        #patientQueue::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #patientQueue::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        #patientQueue::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .consultation-item {
+            transition: all 0.3s ease;
+        }
+        .consultation-item:hover {
+            background-color: #f8f9fa;
+        }
+        .consultation-item .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        #recentConsultations {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #recentConsultations::-webkit-scrollbar {
+            width: 6px;
+        }
+        #recentConsultations::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #recentConsultations::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        #recentConsultations::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .ehr-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .ehr-section h6 {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .ehr-section p {
+            margin-bottom: 5px;
+        }
+        .vital-signs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .vital-sign-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .vital-sign-item .label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .vital-sign-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #212529;
+        }
+        .consultation-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border-right: 1px solid #dee2e6;
+        }
+        .message-item {
+            cursor: pointer;
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .message-item:hover {
+            background-color: #f8f9fa;
+        }
+        .message-item.unread {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+        .message-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .auth-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .auth-modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 5px;
+        }
+        .auth-form-group {
+            margin-bottom: 15px;
+        }
+        .auth-form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .auth-form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .auth-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .auth-button:hover {
+            background-color: #45a049;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-spinner" style="display: none;"></div>
+    
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-modal-content">
+            <h2>Sign In</h2>
+            <form onsubmit="event.preventDefault(); signIn();">
+                <div class="auth-form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="auth-form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="auth-button">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4>TeleMedicine</h4>
+                        <div id="userInfo" class="mt-2" style="display: none;">
+                            <img id="userPhoto" class="rounded-circle mb-2" width="50" height="50">
+                            <p id="userName" class="mb-1"></p>
+                            <p id="userRole" class="small text-muted"></p>
+                            <button class="btn btn-sm btn-outline-danger" onclick="signOut()">Sign Out</button>
+                        </div>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="showDashboard()">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showPatientQueue()">
+                                <i class="bi bi-people"></i> Patient Queue
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showEHR()">
+                                <i class="bi bi-file-medical"></i> EHR
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2" id="pageTitle">Dashboard</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="main-content">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card stats-card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Patients</h5>
+                                    <h2 class="card-text" id="totalPatients">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Active Consultations</h5>
+                                    <h2 class="card-text" id="activeConsultations">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pending Lab Tests</h5>
+                                    <h2 class="card-text" id="pendingLabTests">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div id="mainPatientInfo">
+                                <!-- Patient information will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consultation Form -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div id="consultationForm" style="display: none;">
+                                <!-- Consultation form will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Queue (Fixed on the right) -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Patient Queue</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadPatientQueue()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="patientQueue" class="list-group list-group-flush">
+                            <!-- Patient queue will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,66 @@
+/* Layout */
+.container-fluid {
+    padding: 20px;
+}
+
+/* Patient Queue */
+#patientQueue {
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 30%;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+/* Main Content */
+.main-content {
+    width: 65%;
+    margin-right: 35%;
+}
+
+/* Patient Items */
+.patient-item {
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #eee;
+}
+
+.patient-item:hover {
+    background-color: #f8f9fa;
+}
+
+.patient-item.selected {
+    background-color: #e9ecef;
+}
+
+/* Priority Indicators */
+.high-priority {
+    border-left: 4px solid #dc3545;
+}
+
+.medium-priority {
+    border-left: 4px solid #ffc107;
+}
+
+.low-priority {
+    border-left: 4px solid #28a745;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #patientQueue {
+        position: static;
+        width: 100%;
+        max-height: none;
+    }
+    
+    .main-content {
+        width: 100%;
+        margin-right: 0;
+    }
+} 
